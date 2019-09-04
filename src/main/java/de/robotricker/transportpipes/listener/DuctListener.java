@@ -30,6 +30,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -138,7 +139,7 @@ public class DuctListener implements Listener {
                 boolean manualPlaceable = itemDuctType != null || interaction.item.getType().isSolid();
 
                 // ********************** WRENCH DUCT CLICK ****************************
-                if (clickedDuct != null && itemService.isWrench(interaction.item)) {
+                if (clickedDuct != null && itemDuctType == null && itemService.isWrench(interaction.item) || (!generalConf.getWrenchRequired() && !canBeUsedToObfuscate(interaction.item.getType()))) {
                     //wrench click
                     if (buildAllowed(interaction.p, clickedDuct.getBlockLoc().toBlock(interaction.p.getWorld()))) {
                         clickedDuct.notifyClick(interaction.p, interaction.p.isSneaking());
@@ -166,13 +167,16 @@ public class DuctListener implements Listener {
                     // this block will be used to obfuscate the duct
                     Block ductBlock = clickedDuct.getBlockLoc().toBlock(interaction.p.getWorld());
                     if (buildAllowed(interaction.p, ductBlock)) {
+                        BlockPlaceEvent event = new BlockPlaceEvent(ductBlock, ductBlock.getState(), ductBlock.getRelative(BlockFace.DOWN), interaction.item, interaction.p, true, interaction.hand);
+                        Bukkit.getPluginManager().callEvent(event);
+                        if(!event.isCancelled()) {
+                            BlockData bd = interaction.item.getType().createBlockData();
+                            setDirectionalBlockFace(ductBlock.getLocation(), bd, interaction.p);
+                            ductBlock.setBlockData(bd, true);
+                            clickedDuct.obfuscatedWith(bd);
 
-                        BlockData bd = interaction.item.getType().createBlockData();
-                        setDirectionalBlockFace(ductBlock.getLocation(), bd, interaction.p);
-                        ductBlock.setBlockData(bd, true);
-                        clickedDuct.obfuscatedWith(bd);
-
-                        decreaseHandItem(interaction.p, interaction.hand);
+                            decreaseHandItem(interaction.p, interaction.hand);
+                        }
                     }
 
                     interaction.cancel = true;
@@ -230,16 +234,19 @@ public class DuctListener implements Listener {
                     } else if (clickedDuct != null) {
                         //block placement next to duct
                         if (buildAllowed(interaction.p, placeBlock)) {
+                            BlockPlaceEvent event = new BlockPlaceEvent(placeBlock, placeBlock.getState(), clickedDuct.getBlockLoc().toBlock(placeBlock.getWorld()), interaction.item, interaction.p, true, interaction.hand);
+                            Bukkit.getPluginManager().callEvent(event);
+                            if(!event.isCancelled()) {
+                                BlockData bd = interaction.item.getType().createBlockData();
+                                setDirectionalBlockFace(placeBlock.getLocation(), bd, interaction.p);
+                                placeBlock.setBlockData(bd, true);
 
-                            BlockData bd = interaction.item.getType().createBlockData();
-                            setDirectionalBlockFace(placeBlock.getLocation(), bd, interaction.p);
-                            placeBlock.setBlockData(bd, true);
-
-                            // create TransportPipesContainer from placed block if it is such
-                            if (WorldUtils.isContainerBlock(interaction.item.getType())) {
-                                tpContainerListener.updateContainerBlock(placeBlock, true, true);
+                                // create TransportPipesContainer from placed block if it is such
+                                if (WorldUtils.isContainerBlock(interaction.item.getType())) {
+                                    tpContainerListener.updateContainerBlock(placeBlock, true, true);
+                                }
+                                decreaseHandItem(interaction.p, interaction.hand);
                             }
-                            decreaseHandItem(interaction.p, interaction.hand);
                         }
                         interaction.cancel = true;
                         interaction.successful = true;
