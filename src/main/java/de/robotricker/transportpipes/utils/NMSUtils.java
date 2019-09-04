@@ -1,7 +1,7 @@
 package de.robotricker.transportpipes.utils;
 
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.commons.lang3.reflect.MethodUtils;
+import org.apache.commons.lang.reflect.FieldUtils;
+import org.apache.commons.lang.reflect.MethodUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.FurnaceRecipe;
 import org.bukkit.inventory.ItemStack;
@@ -60,7 +60,7 @@ public final class NMSUtils {
         try {
 
             Class<?> serverClazz = Class.forName("net.minecraft.server." + version + ".MinecraftServer");
-            Object server = MethodUtils.invokeExactStaticMethod(serverClazz, "getServer");
+            Object server = MethodUtils.invokeExactStaticMethod(serverClazz, "getServer", null);
 
             Class<?> pingClazz = Class.forName("net.minecraft.server." + version + ".ServerPing");
             Object ping = null;

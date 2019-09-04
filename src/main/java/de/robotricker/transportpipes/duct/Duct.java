@@ -9,7 +9,6 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.entity.Panda;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
